@@ -115,8 +115,8 @@ bool SkImage_GaneshYUVA::setupMipmapsForPlanes(GrRecordingContext* context) cons
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
-GrDirectContext::FlushResult SkImage_GaneshYUVA::flush(GrDirectContext* dContext,
-                                                       const GrFlushInfo& info) const {
+GrSemaphoresSubmitted SkImage_GaneshYUVA::flush(GrDirectContext* dContext,
+                                                const GrFlushInfo& info) const {
     if (!fContext->priv().matches(dContext) || dContext->abandoned()) {
         if (info.fSubmittedProc) {
             info.fSubmittedProc(info.fSubmittedContext, false);
@@ -124,7 +124,7 @@ GrDirectContext::FlushResult SkImage_GaneshYUVA::flush(GrDirectContext* dContext
         if (info.fFinishedProc) {
             info.fFinishedProc(info.fFinishedContext);
         }
-        return {false, GrSemaphoresSubmitted::kNo};
+        return GrSemaphoresSubmitted::kNo;
     }
 
     std::array<GrSurfaceProxy *, SkYUVAInfo::kMaxPlanes> proxies = {};

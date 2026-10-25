@@ -87,10 +87,7 @@ bool MakeBackendTextureFromImage(GrDirectContext* direct,
     }
 
     // Flush any pending IO on the texture.
-    GrDirectContext::FlushResult result = direct->priv().flushSurface(view.proxy());
-    if (!result.fSuccess) {
-        return false;
-    }
+    direct->priv().flushSurface(view.proxy());
 
     GrTexture* texture = view.asTextureProxy()->peekTexture();
     if (!texture) {
@@ -426,10 +423,7 @@ sk_sp<SkImage> CrossContextTextureFromPixmap(GrDirectContext* dContext,
     sk_sp<GrTexture> texture = sk_ref_sp(view.proxy()->peekTexture());
 
     // Flush any writes or uploads
-    GrDirectContext::FlushResult result = dContext->priv().flushSurface(view.proxy());
-    if (!result.fSuccess) {
-        return nullptr;
-    }
+    dContext->priv().flushSurface(view.proxy());
     GrGpu* gpu = dContext->priv().getGpu();
 
     std::unique_ptr<GrSemaphore> sema = gpu->prepareTextureForCrossContextUsage(texture.get());
