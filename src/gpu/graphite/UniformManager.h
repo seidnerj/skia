@@ -21,6 +21,7 @@
 #include "include/private/SkTArray.h"
 #include "src/core/SkColorData.h"
 #include "src/core/SkHalf.h"
+#include <cstdlib>
 #include "src/core/SkMathPriv.h"
 #include "src/core/SkMatrixPriv.h"
 #include "src/core/SkSLTypeShared.h"
@@ -165,8 +166,10 @@ namespace LayoutRules {
     static constexpr bool PadVec3Size(Layout layout) { return layout == Layout::kMetal; }
     static constexpr bool AlignArraysTo16(Layout layout) { return layout == Layout::kStd140 ||
                                                                   layout == Layout::kStd140_F16; }
-    static constexpr bool UseFullPrecision(Layout layout) { return layout == Layout::kStd140 ||
-                                                                   layout == Layout::kStd430; }
+    inline bool MetalForceF32() { static const bool v = getenv("SK_MTL_F32") != nullptr; return v; }
+    inline bool UseFullPrecision(Layout layout) { return layout == Layout::kStd140 ||
+                                                         layout == Layout::kStd430 ||
+                                                         (layout == Layout::kMetal && MetalForceF32()); }
 }
 
 class UniformOffsetCalculator {
