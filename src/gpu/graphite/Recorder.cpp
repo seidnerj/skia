@@ -5,6 +5,7 @@
  * found in the LICENSE file.
  */
 #include "include/gpu/graphite/Recorder.h"
+#include "include/gpu/graphite/Image.h"
 
 #include "include/core/SkBitmap.h"
 #include "include/core/SkCanvas.h"
@@ -87,10 +88,11 @@ public:
 
     sk_sp<SkImage> findOrCreate(Recorder* recorder,
                                 const SkImage* image,
-                                SkImage::RequiredProperties) override {
+                                SkImage::RequiredProperties requiredProps) override {
         SkASSERT(!as_IB(image)->isGraphiteBacked());
 
-        return nullptr;
+        // upload raster images on demand (as Chrome's provider does) instead of dropping the draw
+        return SkImages::TextureFromImage(recorder, image, requiredProps);
     }
 
 private:
