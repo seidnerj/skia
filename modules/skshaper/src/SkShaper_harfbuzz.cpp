@@ -351,6 +351,9 @@ HBFont create_sub_hb_font(const SkFont& font, const HBFont& typefaceFont) {
                       [](void* user_data){ delete reinterpret_cast<SkFont*>(user_data); });
     int scale = skhb_position(font.getSize());
     hb_font_set_scale(skFont.get(), scale, scale);
+    // the point size selects the AAT 'trak' tracking HarfBuzz applies (as Blink's HarfBuzzFace does with
+    // hb_font_set_ptem); without it fonts like San Francisco shape without their size-specific tracking
+    hb_font_set_ptem(skFont.get(), font.getSize());
 
     return skFont;
 }
