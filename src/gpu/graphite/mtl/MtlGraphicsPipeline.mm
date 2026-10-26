@@ -244,6 +244,7 @@ sk_sp<MtlGraphicsPipeline> MtlGraphicsPipeline::Make(
     SkSL::ProgramSettings settings;
     settings.fSharpenTextures = true;
     settings.fForceNoRTFlip = true;
+    settings.fForceHighPrecision = getenv("SK_MTL_F32") != nullptr;
 
     SkSL::Compiler skslCompiler;
     ShaderErrorHandler* errorHandler = sharedContext->caps()->shaderErrorHandler();

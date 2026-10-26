@@ -460,10 +460,10 @@ std::string MetalCodeGenerator::typeName(const Type& raw) {
 
         case Type::TypeKind::kTexture:
             switch (type.textureAccess()) {
-                case Type::TextureAccess::kSample:    return "texture2d<half>";
-                case Type::TextureAccess::kRead:      return "texture2d<half, access::read>";
-                case Type::TextureAccess::kWrite:     return "texture2d<half, access::write>";
-                case Type::TextureAccess::kReadWrite: return "texture2d<half, access::read_write>";
+                case Type::TextureAccess::kSample:    return fProgram.fConfig->fSettings.fForceHighPrecision ? "texture2d<float>" : "texture2d<half>";
+                case Type::TextureAccess::kRead:      return fProgram.fConfig->fSettings.fForceHighPrecision ? "texture2d<float, access::read>" : "texture2d<half, access::read>";
+                case Type::TextureAccess::kWrite:     return fProgram.fConfig->fSettings.fForceHighPrecision ? "texture2d<float, access::write>" : "texture2d<half, access::write>";
+                case Type::TextureAccess::kReadWrite: return fProgram.fConfig->fSettings.fForceHighPrecision ? "texture2d<float, access::read_write>" : "texture2d<half, access::read_write>";
                 default:                              break;
             }
             SkUNREACHABLE;
@@ -474,6 +474,10 @@ std::string MetalCodeGenerator::typeName(const Type& raw) {
             return "atomic_uint";
 
         default:
+            if (fProgram.fConfig->fSettings.fForceHighPrecision && type.isFloat() &&
+                !type.highPrecision()) {
+                return "float";
+            }
             return std::string(type.name());
     }
 }
@@ -2446,7 +2450,7 @@ void MetalCodeGenerator::writeLiteral(const Literal& l) {
     const Type& type = l.type();
     if (type.isFloat()) {
         this->write(l.description(OperatorPrecedence::kExpression));
-        if (!l.type().highPrecision()) {
+        if (!l.type().highPrecision() && !fProgram.fConfig->fSettings.fForceHighPrecision) {
             this->write("h");
         }
         return;
@@ -3185,6 +3189,11 @@ void MetalCodeGenerator::writeSampler2DPolyfill() {
 "}",
                                                         fTextureBias,
                                                         fTextureBias);
+            if (fCodeGen->fProgram.fConfig->fSettings.fForceHighPrecision) {
+                for (size_t at; (at = polyfill.find("half")) != std::string::npos;) {
+                    polyfill.replace(at, 4, "float");
+                }
+            }
             fCodeGen->write(polyfill.c_str());
         }
 
@@ -3288,9 +3297,9 @@ void MetalCodeGenerator::writeOutputStruct() {
     if (ProgramConfig::IsVertex(fProgram.fConfig->fKind)) {
         this->write("    float4 sk_Position [[position]];\n");
     } else if (ProgramConfig::IsFragment(fProgram.fConfig->fKind)) {
-        this->write("    half4 sk_FragColor [[color(0)]];\n");
+        this->write(fProgram.fConfig->fSettings.fForceHighPrecision ? "    float4 sk_FragColor [[color(0)]];\n\n" : "    half4 sk_FragColor [[color(0)]];\n");
         if (fProgram.fInterface.fOutputSecondaryColor) {
-            this->write("    half4 sk_SecondaryFragColor [[color(0), index(1)]];\n");
+            this->write(fProgram.fConfig->fSettings.fForceHighPrecision ? "    float4 sk_SecondaryFragColor [[color(0), index(1)]];\n\n" : "    half4 sk_SecondaryFragColor [[color(0), index(1)]];\n");
         }
     }
     for (const ProgramElement* e : fProgram.elements()) {
